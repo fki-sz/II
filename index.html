@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Floating Sound Buttons</title>
+
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        background: #0a0f1f;
+        height: 100vh;
+        width: 100vw;
+        position: relative;
+        font-family: sans-serif;
+    }
+
+    #particles {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+    }
+
+    #floating-buttons {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 40vw;
+        height: 40vh;
+        transform: translate(-50%, -50%);
+        z-index: 10;
+        pointer-events: none;
+    }
+
+    .sound-btn {
+        position: absolute;
+        width: 110px;
+        height: 110px;
+        cursor: pointer;
+        pointer-events: auto;
+        transition: transform 0.3s ease;
+    }
+
+    .sound-btn:hover {
+        transform: scale(1.12);
+    }
+</style>
+</head>
+
+<body>
+
+<canvas id="particles"></canvas>
+
+<div id="floating-buttons">
+    <img src="img/sound1.png" class="sound-btn" data-sound="sound1.mp3">
+    <img src="img/sound2.png" class="sound-btn" data-sound="sound2.mp3">
+    <img src="img/sound3.png" class="sound-btn" data-sound="sound3.mp3">
+    <img src="img/sound4.png" class="sound-btn" data-sound="sound3.mp3">
+</div>
+
+<script>
+/* --------------------------
+   パーティクル背景
+--------------------------- */
+const canvas = document.getElementById("particles");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let particles = [];
+
+for (let i = 0; i < 80; i++) {
+    particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 3 + 1,
+        speedX: (Math.random() - 0.5) * 0.3,
+        speedY: (Math.random() - 0.5) * 0.3,
+        color: `rgba(${200 + Math.random()*55}, ${230 + Math.random()*25}, 255, 0.7)`
+    });
+}
+
+function animateParticles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    particles.forEach(p => {
+        p.x += p.speedX;
+        p.y += p.speedY;
+
+        if (p.x < 0 || p.x > canvas.width) p.speedX *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.speedY *= -1;
+
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+/* --------------------------
+   浮遊ボタン（重なり防止あり）
+--------------------------- */
+const buttons = document.querySelectorAll(".sound-btn");
+
+buttons.forEach(btn => {
+    btn.style.left = Math.random() * 80 + "%";
+    btn.style.top = Math.random() * 80 + "%";
+
+    let dx = (Math.random() - 0.5) * 0.25;
+    let dy = (Math.random() - 0.5) * 0.25;
+
+    function float() {
+        let x = parseFloat(btn.style.left);
+        let y = parseFloat(btn.style.top);
+
+        x += dx;
+        y += dy;
+
+        // 範囲制限（中央付近）
+        if (x < 5 || x > 85) dx *= -1;
+        if (y < 5 || y > 85) dy *= -1;
+
+        btn.style.left = x + "%";
+        btn.style.top = y + "%";
+
+        preventOverlap(btn);
+
+        requestAnimationFrame(float);
+    }
+    float();
+});
+
+/* --------------------------
+   重なり防止
+--------------------------- */
+function preventOverlap(currentBtn) {
+    const currentRect = currentBtn.getBoundingClientRect();
+
+    buttons.forEach(otherBtn => {
+        if (otherBtn === currentBtn) return;
+
+        const otherRect = otherBtn.getBoundingClientRect();
+
+        const dx = currentRect.left - otherRect.left;
+        const dy = currentRect.top - otherRect.top;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // ボタンは110px → 半径55px → 重なり防止距離は120pxくらい
+        const minDistance = 120;
+
+        if (distance < minDistance) {
+            const angle = Math.atan2(dy, dx);
+
+            // 少しだけ押し返す
+            const push = (minDistance - distance) * 0.05;
+
+            const newX = parseFloat(currentBtn.style.left) + Math.cos(angle) * push;
+            const newY = parseFloat(currentBtn.style.top) + Math.sin(angle) * push;
+
+            currentBtn.style.left = newX + "%";
+            currentBtn.style.top = newY + "%";
+        }
+    });
+}
+
+/* --------------------------
+   音声再生
+--------------------------- */
+buttons.forEach(btn => {
+    const sound = new Audio(btn.dataset.sound);
+    btn.addEventListener("click", () => {
+        sound.currentTime = 0;
+        sound.play();
+    });
+});
+</script>
+
+</body>
+</html>
