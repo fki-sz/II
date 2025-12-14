@@ -190,7 +190,6 @@ function setupSoundButton(btnId, soundObj) {
 
 
 
-
 setupSoundButton("sound1btn", sounds.sound1);
 setupSoundButton("sound2btn", sounds.sound2);
 setupSoundButton("sound3btn", sounds.sound3);
@@ -211,20 +210,23 @@ vol3.oninput = () => (sounds.sound3.volume = vol3.value);
 vol4.oninput = () => (sounds.sound4.volume = vol4.value);
 
 function createVolumeControl(id, soundObj) {
-  // すでに存在する場合は作らない
   if (document.getElementById(`row-${id}`)) return;
+
+  const btn = document.getElementById(id);
+  const displayName = btn?.dataset.name || id;
 
   const row = document.createElement("div");
   row.className = "volume-row";
   row.id = `row-${id}`;
 
   row.innerHTML = `
-    <span>${id}</span>
+    <span>${displayName}</span>
     <input type="range" min="0" max="1" step="0.01" value="${soundObj.volume}" class="vol-range" />
     <button class="stop-btn">×</button>
   `;
 
   document.getElementById("volumePanel").appendChild(row);
+
 
   // 音量変更
   row.querySelector(".vol-range").oninput = (e) => {
@@ -257,7 +259,7 @@ row.querySelector(".stop-btn").onclick = () => {
 
 
 /* ----------------------------------
-   ツールチップ
+   ツールチップ（アイコン吹き出し）
 ---------------------------------- */
 document.querySelectorAll(".sound-btn").forEach(btn => {
   const tooltip = document.createElement("div");
