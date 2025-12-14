@@ -30,8 +30,10 @@ function tick() {
   // ★ 1回目のゼロ → 5分に自動切替
   if (!breakUsed) {
     breakUsed = true;
+    pauseTimer();// ← ★ タイマー停止
     timeLeft = 5 * 60;  // 5分にセット
     updateDisplay(timeLeft);
+    playPauseBtn.textContent = "▶"; // ボタンも再生表示に戻す
     return;
   }
 
